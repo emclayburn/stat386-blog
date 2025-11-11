@@ -121,4 +121,41 @@ plt.close()
 ```
 ![NBA Success vs. Offensive Efficiency](eda_points_vs_winpct.png)
 
-From the chart, we can see that the correlation coefficient between team success and offenseive efficiency is only .3232, which is not strong. There are other factors that play into winning a game. Perhaps defense really does win championships.
+From the chart, we can see that the correlation coefficient between team success and offenseive efficiency is only .3232, which is not strong. While having a high powered offense does help you win games, it doesn't make that you win every game. There are other factors that play into winning a game. Perhaps defense really does win championships. I wanted to dive a little deeper into this stat. I decided to look at point differential vs winning percentage instead of just pure scoring. When I looked at that result, something more predictable happened:
+
+``` python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+file_path = 'nba_clean_for_eda.csv'
+df = pd.read_csv(file_path)
+
+X_VAR_DIFF = 'DiffPointsPG'
+Y_VAR = 'WinPCT'
+
+correlation_diff = df[X_VAR_DIFF].corr(df[Y_VAR])
+
+print(f"--- Correlation Analysis for {X_VAR_DIFF} vs. {Y_VAR} ---")
+print(f"The Pearson correlation coefficient (r) is: {correlation_diff:.4f}")
+
+plt.figure(figsize=(10, 6))
+
+plt.scatter(df[X_VAR_DIFF], df[Y_VAR], alpha=0.6, s=50)
+
+plt.title(f'NBA Success vs. Scoring Margin (2010-11 to 2023-24)\nCorrelation (r): {correlation_diff:.4f}', fontsize=14)
+plt.xlabel('Point Differential Per Game (DiffPointsPG)', fontsize=12)
+plt.ylabel('Winning Percentage (WinPCT)', fontsize=12)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+z = np.polyfit(df[X_VAR_DIFF], df[Y_VAR], 1)
+p = np.poly1d(z)
+plt.plot(df[X_VAR_DIFF], p(df[X_VAR_DIFF]), "r--", label=f'Trend Line')
+
+plot_filename = 'eda_diffpoints_vs_winpct.png'
+plt.savefig(plot_filename)
+plt.close()
+
+print(f"\nScatter plot saved as: {plot_filename}")
+```
+![NBA Success vs. Scoring Margin](eda_diffpoints_vs_winpct.png)
