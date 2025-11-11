@@ -55,38 +55,40 @@ At this point, the data you have collected will be saved as "nba_team_standings_
 ```python
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
-file_path = 'nba_team_standings_historical.csv'
-df = pd.read_csv(file_path)
+df_main = pd.read_csv('nba_team_standings_historical.csv')
+df_3pt = pd.read_csv('nba_3pt_attempts_historical.csv')
+
+df_3pt['FG3A_PG'] = df_3pt['FG3A'] / df_3pt['GP']
 
 CORE_FEATURES = [
     'SEASON_YEAR_FULL',
-    'TeamName',
-    'WINS', 
-    'WinPCT',
-    'PointsPG',
-    'DiffPointsPG',
-    'AheadAtHalf',
-    'HOME',
-    'ROAD'
+    'TeamID',
+    'TeamName', 'WINS', 'WinPCT', 'PointsPG', 'DiffPointsPG',
+    'AheadAtHalf', 'HOME', 'ROAD'
 ]
 
-df_filtered = df[CORE_FEATURES].copy()
+df_filtered = df_main[CORE_FEATURES].copy()
 
 df_filtered['WinPCT'] = pd.to_numeric(df_filtered['WinPCT'], errors='coerce')
-
 home_split = df_filtered['HOME'].str.split('-', expand=True)
 df_filtered['Home_Wins'] = pd.to_numeric(home_split[0], errors='coerce')
 df_filtered['Home_Losses'] = pd.to_numeric(home_split[1], errors='coerce')
-
 road_split = df_filtered['ROAD'].str.split('-', expand=True)
 df_filtered['Road_Wins'] = pd.to_numeric(road_split[0], errors='coerce')
 df_filtered['Road_Losses'] = pd.to_numeric(road_split[1], errors='coerce')
-
 df_filtered = df_filtered.drop(columns=['HOME', 'ROAD'])
 
-df_filtered.to_csv('nba_clean_for_eda.csv', index=False)
+df_final = pd.merge(
+    df_filtered, 
+    df_3pt[['TEAM_ID', 'SEASON_YEAR_FULL', 'FG3A_PG']],
+    left_on=['TeamID', 'SEASON_YEAR_FULL'], 
+    right_on=['TEAM_ID', 'SEASON_YEAR_FULL'], 
+    how='left'
+)
+df_final = df_final.drop(columns=['TEAM_ID'])
+
+df_final.to_csv('nba_clean_for_eda.csv', index=False)
 ```
 
 # Finding Number 1
@@ -159,3 +161,93 @@ plt.close()
 print(f"\nScatter plot saved as: {plot_filename}")
 ```
 ![NBA Success vs. Scoring Margin](eda_diffpoints_vs_winpct.png)
+
+As you can see from the plot, there correlation coefficient between team success and scoring margin is .9647, this tells us a lot more that the previous number. Teams need to outscore their opponent by a wider margin to win more games. This takes into account defense and offense.
+
+# Finding Number 2
+
+The next thing that I want to look at is how the points per game for the entire has changed over the last 15 years. In that time, the 3 point shot attemts have sky rocketed. Using the following code, we can find the trend line:
+
+``` python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df_final = pd.read_csv('nba_clean_for_eda.csv')
+
+df_combined_avg = df_final.groupby('SEASON_YEAR_FULL').agg(
+    Avg_PointsPG=('PointsPG', 'mean'),
+    Avg_FG3A_PG=('FG3A_PG', 'mean')
+).reset_index()
+
+df_combined_avg['Season_End_Year'] = df_combined_avg['SEASON_YEAR_FULL'].str.split('-').str[1]
+x_labels = df_combined_avg['Season_End_Year'].tolist()
+
+fig, ax1 = plt.subplots(figsize=(12, 6))
+
+color1 = 'tab:blue'
+ax1.set_xlabel('NBA Season End Year', fontsize=12)
+ax1.set_ylabel('Avg. Points Per Game (PointsPG)', color=color1, fontsize=12)
+ax1.plot(x_labels, df_combined_avg['Avg_PointsPG'], marker='o', linestyle='-', color=color1, label='Avg. PointsPG')
+ax1.tick_params(axis='y', labelcolor=color1)
+ax1.tick_params(axis='x', rotation=45)
+
+ax2 = ax1.twinx()
+color2 = 'tab:red'
+ax2.set_ylabel('Avg. 3-Point Attempts Per Game (FG3A_PG)', color=color2, fontsize=12)
+ax2.plot(x_labels, df_combined_avg['Avg_FG3A_PG'], marker='s', linestyle='--', color=color2, label='Avg. FG3A_PG')
+ax2.tick_params(axis='y', labelcolor=color2)
+ax2.grid(axis='y', linestyle=':', alpha=0.5, color=color2)
+
+plt.title('The Evolving NBA: Points Per Game vs. 3-Point Attempts Over Time', fontsize=16)
+fig.legend(loc="upper left", bbox_to_anchor=(0.1, 0.95))
+
+plt.tight_layout()
+plot_filename = 'eda_points_vs_3pt_time_series_combined.png'
+plt.savefig(plot_filename)
+plt.close()
+```
+![Average NBA Points Per Game and 3 Pointers Attempted](eda_points_vs_3pt_time_series_combined.png)
+
+
+Looking at the trendline, we can see that the league average of points per game has risen by almost 15 points since the 2010-11 season. We can also see that the amount of 3 pointers attempted a game follows almost the exact same trend. The "three ball" has revolutionized the scoring in the NBA.
+
+# Finding Number 3
+
+The last thing I wanted to look at was whether or not home court advantage really existed. Using the following code, we can see if there is a difference between home and road win totals:
+
+``` python
+file_path = 'nba_clean_for_eda.csv'
+df = pd.read_csv(file_path)
+
+avg_home_wins = df['Home_Wins'].mean()
+avg_road_wins = df['Road_Wins'].mean()
+
+home_advantage_wins = avg_home_wins - avg_road_wins
+
+print("--- Situational Analysis: Home-Court Advantage ---")
+print(f"Average Home Wins (per season): {avg_home_wins:.2f}")
+print(f"Average Road Wins (per season): {avg_road_wins:.2f}")
+print(f"Average Home-Court Advantage (Difference): {home_advantage_wins:.2f} wins")
+
+labels = ['Average Home Wins', 'Average Road Wins']
+wins = [avg_home_wins, avg_road_wins]
+
+plt.figure(figsize=(8, 6))
+plt.bar(labels, wins, color=['darkblue', 'gray'])
+
+for i, win_count in enumerate(wins):
+    plt.text(i, win_count + 0.5, f'{win_count:.2f}', ha='center', fontsize=12)
+
+plt.title('Home vs. Road Wins (NBA 2010-11 to 2023-24)', fontsize=14)
+plt.ylabel('Average Wins Per Team Per Season', fontsize=12)
+plt.xlabel(f'Average Home-Court Advantage: {home_advantage_wins:.2f} Wins', fontsize=12)
+plt.grid(axis='y', linestyle='--', alpha=0.5)
+
+plot_filename = 'eda_home_road_comparison.png'
+plt.savefig(plot_filename)
+plt.close()
+```
+
+![Average NBA Home Wins vs Road Wins](eda_home_road_comparison.png)
+
+From the graph, we can see that there is such of a thing as home court advantage. Teams tend to win almost 6 more games a year at home compared to on the road.
