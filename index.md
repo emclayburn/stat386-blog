@@ -1,5 +1,5 @@
 ---
-title: Ethan's github page
+title: What NBA Data Really Tells Us: An Analysis of Efficiency and Home-Court Advantage
 ---
 
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -88,3 +88,37 @@ df_filtered = df_filtered.drop(columns=['HOME', 'ROAD'])
 
 df_filtered.to_csv('nba_clean_for_eda.csv', index=False)
 ```
+
+# Finding Number 1
+
+The first question I want to answer with the data is does having a higher offensive presence i.e scoring more point, lead to a higher win percentage? The results I found were quite shocking. Use this code, I was able to get a graph and a correlation coefficient:
+
+``` python
+new_filename = 'nba_clean_for_eda.csv'
+df_final = pd.read_csv(new_filename)
+
+X_VAR = 'PointsPG'
+Y_VAR = 'WinPCT'
+
+correlation = df[X_VAR].corr(df[Y_VAR])
+
+plt.figure(figsize=(10, 6))
+
+plt.scatter(df[X_VAR], df[Y_VAR], alpha=0.6, s=50)
+
+plt.title(f'NBA Success vs. Offensive Efficiency (2010-11 to 2023-24)\nCorrelation (r): {correlation:.4f}', fontsize=14)
+plt.xlabel('Points Per Game (PointsPG)', fontsize=12)
+plt.ylabel('Winning Percentage (WinPCT)', fontsize=12)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+z = np.polyfit(df[X_VAR], df[Y_VAR], 1)
+p = np.poly1d(z)
+plt.plot(df[X_VAR], p(df[X_VAR]), "r--", label=f'Trend Line')
+
+plot_filename = 'eda_points_vs_winpct.png'
+plt.savefig(plot_filename)
+plt.close()
+```
+![NBA Success vs. Offensive Efficiency](eda_points_vs_winpct.png)
+
+From the chart, we can see that the correlation coefficient between team success and offenseive efficiency is only .3232, which is not strong. There are other factors that play into winning a game. Perhaps defense really does win championships.
