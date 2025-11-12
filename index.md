@@ -1,5 +1,5 @@
 ---
-title: What NBA Data Really Tells Us: An Analysis of Efficiency and Home-Court Advantage
+title: What NBA Data Really Tells Us, An Analysis of Efficiency and Home-Court Advantage
 ---
 
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -11,13 +11,11 @@ title: What NBA Data Really Tells Us: An Analysis of Efficiency and Home-Court A
 
 The game of basketball has changed in many ways throughout the years. From the style of play to the athletes themselves, the NBA has evolved into a fast-paced, high-scoring league that emphasizes athleticism and skill. But what does the data tell us about these changes? Is it effective to rely purely on scoring, or does defense really win championships? In this blog post, we will explore some key statistics and trends in the NBA to uncover what the data really tells us about the game.
 
----
 
 # Motivating Question
 
 What do we want to learn from this data? What I am going to explore is how does points per game impact your winning percentage? Also, if you are leading at the half, does that mean you are winning the games? How consistant of a team are you from the start of the game to the end. 
 
----
 
 # Data Collection
 
