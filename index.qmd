@@ -38,7 +38,7 @@ My first question was whether a team's offensive output, specifically points per
 
 Using my cleaned dataset, I calculated the correlation between PointPG and WinPCT and created a scatterplot with a regression line to visualize the relationship:
 
-```{python}
+```python
 correlation = df['PointsPG'].corr(df['WinPCT'])
 ```
 
