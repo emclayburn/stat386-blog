@@ -249,3 +249,7 @@ plt.close()
 ![Average NBA Home Wins vs Road Wins](eda_home_road_comparison.png)
 
 From the graph, we can see that there is such of a thing as home court advantage. Teams tend to win almost 6 more games a year at home compared to on the road.
+
+# My other repository
+
+Here is a link to my other repository that has all of my data collection and EDA: [Github](https://github.com/emclayburn/Stat386-data-acquisition).
